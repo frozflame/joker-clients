@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import traceback
-import urllib.parse
 from typing import Union
 from urllib.parse import urljoin
 
@@ -32,7 +31,7 @@ class HTTPClient(_BaseHTTPClient):
     timeout = 30
 
     def get_url(self, path: str):
-        return urllib.parse.urljoin(self.base_url, path)
+        return urljoin(self.base_url, path)
 
     @staticmethod
     def _load_json(resp: requests.Response) -> Union[dict, list, None]:

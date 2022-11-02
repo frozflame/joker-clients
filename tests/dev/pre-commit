@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+set -e
+set -x
+export PATH=/usr/local/bin:/usr/bin:"$PATH"
+echo "$PATH"
+
+# shellcheck disable=SC2039
+if [[ -f venv/bin/activate ]]; then
+    source venv/bin/activate
+elif [[ -f ~/.venv/joker-clients/bin/activate ]]; then
+    # shellcheck disable=SC1090
+    source ~/.venv/joker-clients/bin/activate
+fi
+
+# python tests/dev/bump_version.py
+# git add joker/clients/__init__.py
+
+python -m flake8 joker/
+python -m pytest -vs tests/test_*.py
