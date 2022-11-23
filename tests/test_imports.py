@@ -8,7 +8,7 @@ from volkanic.introspect import find_all_plain_modules
 
 
 class JokerInterface(joker.meta.JokerInterface):
-    package_name = 'joker.interfaces'
+    package_name = 'joker.clients'
 
 
 ji = JokerInterface()
