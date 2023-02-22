@@ -25,6 +25,8 @@ class PDFClient(_BaseHTTPClient):
             'content: %s bytes, %r',
             len(resp.content), resp.content[:100],
         )
+        if not resp.content.startswith(b'%PDF'):
+            raise RuntimeError('improper header for a PDF file')
         return resp.content, resp.url
 
     def generate(self, tpl_path: str, data: dict) -> bytes:
