@@ -1,8 +1,11 @@
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
+from joker.clients.cas import ContentAddressedStorageClient
+from joker.clients.files import FileStorageInterface
 from joker.clients.monolog import MonologInterface
 from joker.clients.printable import PDFClient
-from joker.clients.files import FileStorageInterface
+
+CASClient = ContentAddressedStorageClient
 
 if __name__ == '__main__':
     print(__version__)
