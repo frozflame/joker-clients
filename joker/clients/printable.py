@@ -7,12 +7,52 @@ import logging
 import urllib.parse
 from dataclasses import dataclass
 from functools import cached_property
+from typing import TypedDict
 
 import requests
 
-from joker.clients.utils import ensure_url_root
+from joker.clients.utils import ensure_url_root, parse_url_qsd
 
 _logger = logging.getLogger(__name__)
+
+
+class PrintableTaskDict(TypedDict):
+    tpl_path: str
+    ctxid: str
+    html_url: str
+    pdf_url: str
+
+
+@dataclass
+class PrintableTask:
+    client: PrintableClient
+    tpl_path: str
+    ctxid: str
+
+    @property
+    def html_url(self):
+        url = urllib.parse.urljoin(self.client.url, self.tpl_path)
+        return url + f'?ctxid={self.ctxid}'
+
+    @property
+    def pdf_url(self):
+        path = f'{self.tpl_path}.pdf'
+        url = urllib.parse.urljoin(self.client.url, path)
+        return url + f'?ctxid={self.ctxid}'
+
+    def to_dict(self) -> PrintableTaskDict:
+        return {
+            'tpl_path': self.tpl_path,
+            'ctxid': self.ctxid,
+            'html_url': self.html_url,
+            'pdf_url': self.pdf_url,
+        }
+
+    def obtain_html(self) -> str:
+        return self.client.session.get(self.html_url).text
+
+    def obtain_pdf(self) -> bytes:
+        return self.client.session.get(self.pdf_url).content
 
 
 @dataclass
@@ -26,14 +66,24 @@ class PrintableClient:
     def session(self):
         return requests.session()
 
-    def _post_as_json(self, url: str, data: dict):
+    def _post_as_json(self, url: str, data: dict, **kwargs):
         """
         Exists because by calling requests.post(url, json=data)
         you have nowhere to pass a parameter like default=str
         """
-        headers = {'Content-type': 'application/json'}
+        headers = kwargs.setdefault('headers', {})
+        headers.update({'Content-Type': 'application/json'})
         payload = json.dumps(data, default=str)
-        return self.session.post(url, data=payload, headers=headers)
+        return self.session.post(url, data=payload, **kwargs)
+
+    def begin(self, tpl_path: str, data: dict) -> PrintableTask:
+        assert tpl_path.endswith('.html')
+        url = urllib.parse.urljoin(self.url, tpl_path)
+        url += '.pdf'
+        _logger.info('begin context with url: %r', url)
+        resp = self._post_as_json(url, data, allow_redirects=False)
+        ctxid = parse_url_qsd(resp.headers['Location'])['ctxid']
+        return PrintableTask(self, tpl_path, ctxid)
 
     def _generate(self, tpl_path: str, data: dict) -> (bytes, str):
         url = urllib.parse.urljoin(self.url, tpl_path)

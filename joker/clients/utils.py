@@ -118,3 +118,14 @@ def ensure_url_root(url: str) -> None:
     if path == '' or path.endswith('/'):
         return
     raise ValueError('service url path must end with "/"')
+
+
+def post_as_json(url: str, data: dict, **kwargs):
+    """
+    Exists because by calling requests.post(url, json=data)
+    you have nowhere to pass a parameter like default=str
+    """
+    headers = kwargs.setdefault('headers', {})
+    headers.update({'Content-Type': 'application/json'})
+    payload = json.dumps(data, default=str)
+    return requests.post(url, data=payload, **kwargs)
