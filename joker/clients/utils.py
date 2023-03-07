@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import shlex
+import urllib.parse
 from functools import cached_property
 from json import JSONDecodeError
-from urllib.parse import urlparse
 
 import requests
 # noinspection PyUnresolvedReferences
@@ -81,17 +81,40 @@ def decode_response(resp: requests.Response):
 class _BaseHTTPClient:
     @staticmethod
     def _check_url(url: str):
-        path = urlparse(url).path
+        path = urllib.parse.urlparse(url).path
         if path == '' or path.endswith('/'):
             return
         raise ValueError('service url path must end with "/"')
 
     def __init__(self, url: str):
         self._check_url(url)
-        self.base_url = url
+        self.url = url
         c = self.__class__.__name__
         _logger.info('new %s instance, %r', c, url)
+
+    @property
+    def base_url(self):
+        """for backward-compatibility"""
+        return self.url
 
     @cached_property
     def session(self):
         return requests.session()
+
+
+def parse_url_qsd(url: str) -> dict:
+    """
+    >>> parse_url_qsd('https://example.com/?q=1&q=2')
+    {'q': '2'}
+    >>> parse_url_qsd('https://example.com/')
+    {}
+    """
+    query = urllib.parse.urlparse(url).query
+    return dict(urllib.parse.parse_qsl(query))
+
+
+def ensure_url_root(url: str) -> None:
+    path = urllib.parse.urlparse(url).path
+    if path == '' or path.endswith('/'):
+        return
+    raise ValueError('service url path must end with "/"')
