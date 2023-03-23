@@ -2,16 +2,12 @@
 # coding: utf-8
 from __future__ import annotations
 
-import json
 import logging
 import urllib.parse
 from dataclasses import dataclass
-from functools import cached_property
 from typing import TypedDict
 
-import requests
-
-from joker.clients.utils import ensure_url_root, parse_url_qsd
+from joker.clients.utils import parse_url_qsd, _HTTPClient
 
 _logger = logging.getLogger(__name__)
 
@@ -55,27 +51,7 @@ class PrintableTask:
         return self.client.session.get(self.pdf_url).content
 
 
-@dataclass
-class PrintableClient:
-    url: str
-
-    def __post_init__(self):
-        ensure_url_root(self.url)
-
-    @cached_property
-    def session(self):
-        return requests.session()
-
-    def _post_as_json(self, url: str, data: dict, **kwargs):
-        """
-        Exists because by calling requests.post(url, json=data)
-        you have nowhere to pass a parameter like default=str
-        """
-        headers = kwargs.setdefault('headers', {})
-        headers.update({'Content-Type': 'application/json'})
-        payload = json.dumps(data, default=str)
-        return self.session.post(url, data=payload, **kwargs)
-
+class PrintableClient(_HTTPClient):
     def begin(self, tpl_path: str, data: dict) -> PrintableTask:
         assert tpl_path.endswith('.html')
         url = urllib.parse.urljoin(self.url, tpl_path)

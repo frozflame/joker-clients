@@ -5,14 +5,14 @@ from __future__ import annotations
 import logging
 from urllib.parse import urljoin
 
-from joker.clients.utils import decode_response, _BaseHTTPClient
+from joker.clients.utils import decode_response, _HTTPClient
 
 _logger = logging.getLogger(__name__)
 
 
-class MonologInterface(_BaseHTTPClient):
+class MonologInterface(_HTTPClient):
     def fmt_url(self, channel: str):
-        return urljoin(self.base_url, f'api/v1/{channel}')
+        return urljoin(self.url, f'api/v1/{channel}')
 
     def push(self, channel: str, data: list):
         """Push data to the monolog server"""

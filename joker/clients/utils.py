@@ -6,6 +6,7 @@ import json
 import logging
 import shlex
 import urllib.parse
+from dataclasses import dataclass
 from functools import cached_property
 from json import JSONDecodeError
 
@@ -78,30 +79,6 @@ def decode_response(resp: requests.Response):
         raise
 
 
-class _BaseHTTPClient:
-    @staticmethod
-    def _check_url(url: str):
-        path = urllib.parse.urlparse(url).path
-        if path == '' or path.endswith('/'):
-            return
-        raise ValueError('service url path must end with "/"')
-
-    def __init__(self, url: str):
-        self._check_url(url)
-        self.url = url
-        c = self.__class__.__name__
-        _logger.info('new %s instance, %r', c, url)
-
-    @property
-    def base_url(self):
-        """for backward-compatibility"""
-        return self.url
-
-    @cached_property
-    def session(self):
-        return requests.session()
-
-
 def parse_url_qsd(url: str) -> dict:
     """
     >>> parse_url_qsd('https://example.com/?q=1&q=2')
@@ -120,12 +97,48 @@ def ensure_url_root(url: str) -> None:
     raise ValueError('service url path must end with "/"')
 
 
-def post_as_json(url: str, data: dict, **kwargs):
+def json_default(obj):
+    try:
+        return obj.__json__()
+    except AttributeError:
+        return str(obj)
+
+
+def post_as_json(url: str, data: dict, func=requests.post, **kwargs):
     """
     Exists because by calling requests.post(url, json=data)
     you have nowhere to pass a parameter like default=str
     """
     headers = kwargs.setdefault('headers', {})
     headers.update({'Content-Type': 'application/json'})
-    payload = json.dumps(data, default=str)
-    return requests.post(url, data=payload, **kwargs)
+    payload = json.dumps(data, default=json_default)
+    return func(url, data=payload, **kwargs)
+
+
+@dataclass
+class _HTTPClient:
+    url: str
+
+    def __post_init__(self):
+        ensure_url_root(self.url)
+        c = self.__class__.__name__
+        _logger.info('new %s instance, %r', c, self.url)
+
+    @cached_property
+    def session(self):
+        return requests.session()
+
+    def _post_as_json(self, url: str, data: dict, **kwargs):
+        """
+        Exists because by calling requests.post(url, json=data)
+        you have nowhere to pass a parameter like default=str
+        """
+        return post_as_json(url, data, func=self.session.post, **kwargs)
+
+    @property
+    def base_url(self):
+        """for backward-compatibility"""
+        return self.url
+
+
+_BaseHTTPClient = _HTTPClient
