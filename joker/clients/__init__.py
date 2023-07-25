@@ -1,9 +1,9 @@
-__version__ = '0.1.6'
+__version__ = '0.2.0'
 
 from joker.clients.cas import ContentAddressedStorageClient
 from joker.clients.files import FileStorageInterface
 from joker.clients.monolog import MonologInterface
-from joker.clients.printable import PrintableClient, PDFClient
+from joker.clients.printable import PrintableClient
 
 CASClient = ContentAddressedStorageClient
 

@@ -11,10 +11,9 @@ from functools import cached_property
 from json import JSONDecodeError
 
 import requests
-# noinspection PyUnresolvedReferences
-from joker.meta.utils import *
 from volkanic.errors import TechnicalError
 from volkanic.introspect import razor
+from volkanic.utils import json_default
 
 _logger = logging.getLogger(__name__)
 
@@ -97,13 +96,6 @@ def ensure_url_root(url: str) -> None:
     raise ValueError('service url path must end with "/"')
 
 
-def json_default(obj):
-    try:
-        return obj.__json__()
-    except AttributeError:
-        return str(obj)
-
-
 def post_as_json(url: str, data: dict, func=requests.post, **kwargs):
     """
     Exists because by calling requests.post(url, json=data)
@@ -142,3 +134,13 @@ class _HTTPClient:
 
 
 _BaseHTTPClient = _HTTPClient
+
+
+def check_pdf_validity(pdf_content: bytes) -> bool:
+    if not pdf_content.startswith(b"%PDF-"):
+        return False
+    if len(pdf_content) < 1000:
+        return False
+    if b'%%EOF' not in pdf_content[-1024:]:
+        return False
+    return True
