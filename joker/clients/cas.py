@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import os
 import typing
-import urllib.parse
 import zipfile
 from dataclasses import dataclass
 from functools import cached_property
+from urllib.parse import urljoin
 
 import requests
 
@@ -23,21 +23,34 @@ class MemberFile(typing.TypedDict):
 class ContentAddressedStorageClient:
     base_url: str
     credential: dict
+    outer_url: str = None
 
-    @cached_property
-    def session(self):
+    @property
+    def inner_url(self):
+        return self.base_url
+
+    def __post_init__(self):
+        if self.outer_url is None:
+            self.outer_url = self.base_url
+
+    @property
+    def _adhoc_session(self):
         sess = requests.session()
-        url = urllib.parse.urljoin(self.base_url, '/login')
+        url = urljoin(self.base_url, 'login')
         sess.post(url, data=self.credential)
         return sess
 
+    @cached_property
+    def session(self):
+        return self._adhoc_session
+
     def save(self, content: bytes) -> str:
-        url = urllib.parse.urljoin(self.base_url, '/files')
-        resp = self.session.post(url, files={'file': content})
+        url = urljoin(self.base_url, 'files')
+        resp = self._adhoc_session.post(url, files={'file': content})
         return resp.json()['data']
 
     def load(self, cid: str) -> bytes:
-        url = urllib.parse.urljoin(self.base_url, f'/files/{cid}')
+        url = urljoin(self.base_url, f'files/{cid}')
         resp = requests.get(url)
         return resp.content
 
@@ -47,4 +60,3 @@ class ContentAddressedStorageClient:
                 content = self.load(m['cid'])
                 with zipf.open(m['filename'], 'w') as fout:
                     fout.write(content)
-

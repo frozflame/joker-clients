@@ -7,8 +7,10 @@ import typing
 
 from joker.clients.cas import MemberFile, ContentAddressedStorageClient
 
-
-"""Deprecated!"""
+"""
+Deprecated!
+This module will be removed on ver 0.3.0.
+"""
 
 PathLike = typing.Union[str, os.PathLike]
 FileStorageInterface = ContentAddressedStorageClient

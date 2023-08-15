@@ -10,7 +10,8 @@ from urllib.parse import urljoin
 
 import requests
 
-from joker.clients.utils import parse_url_qsd, ensure_url_root, post_as_json, check_pdf_validity
+from joker.clients import utils
+from joker.clients.utils import post_as_json
 
 _logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class PrintableClient:
         return requests.session()
 
     def __post_init__(self):
-        ensure_url_root(self.inner_url)
+        utils.ensure_url_root(self.inner_url)
         if self.outer_url is None:
             self.outer_url = self.inner_url
         c = self.__class__.__name__
@@ -92,7 +93,7 @@ class PrintableClient:
         _logger.info('begin context with url: %r', url)
         resp = post_as_json(url, data, allow_redirects=False)
         try:
-            ctxid = parse_url_qsd(resp.headers['Location'])['ctxid']
+            ctxid = utils.parse_url_qsd(resp.headers['Location'])['ctxid']
         except KeyError:
             raise RuntimeError(f'failed to render {url!r}')
         return PrintableTask(self, tpl_path, ctxid)
@@ -106,7 +107,7 @@ class PrintableClient:
             'content: %s bytes, %r',
             len(resp.content), resp.content[:100],
         )
-        if not check_pdf_validity(resp.content):
+        if not utils.check_pdf_validity(resp.content):
             raise RuntimeError('corrupted PDF file')
         return resp.content, resp.url
 
