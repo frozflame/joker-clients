@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import typing
 import zipfile
+import zlib
 from dataclasses import dataclass
 from functools import cached_property
 from urllib.parse import urljoin
@@ -53,6 +54,14 @@ class ContentAddressedStorageClient:
         url = urljoin(self.base_url, f'files/{cid}')
         resp = requests.get(url)
         return resp.content
+
+    def save_text(self, text: str) -> str:
+        content = zlib.compress(text.encode('utf-8'), wbits=31)
+        return self.save(content)
+
+    def load_text(self, cid: str) -> str:
+        content = self.load(cid)
+        return zlib.decompress(content, wbits=31).decode('utf-8')
 
     def create_archive(self, path: PathLike, memberfiles: list[MemberFile]):
         with zipfile.ZipFile(path, "w") as zipf:
