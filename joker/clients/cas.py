@@ -10,6 +10,7 @@ from functools import cached_property
 from urllib.parse import urljoin
 
 import requests
+from volkanic.errors import TechnicalError
 
 from joker.clients.utils import Pathlike
 
@@ -49,18 +50,24 @@ class ContentAddressedStorageClient:
         resp = self._adhoc_session.post(url, files={'file': content})
         return resp.json()['data']
 
-    def load(self, cid: str) -> bytes:
-        url = urljoin(self.base_url, f'files/{cid}')
+    def load(self, cid: str) -> None | bytes:
+        url = urljoin(self.inner_url, f'files/{cid}')
         resp = requests.get(url)
-        return resp.content
+        if resp.status_code == 200:
+            return resp.content
+        if resp.status_code == 404:
+            return
+        raise TechnicalError(f'got response status code {resp.status_code}')
+
+    def load_text(self, cid: str) -> None | str:
+        content = self.load(cid)
+        if not content:
+            return
+        return zlib.decompress(content, wbits=31).decode('utf-8')
 
     def save_text(self, text: str) -> str:
         content = zlib.compress(text.encode('utf-8'), wbits=31)
         return self.save(content)
-
-    def load_text(self, cid: str) -> str:
-        content = self.load(cid)
-        return zlib.decompress(content, wbits=31).decode('utf-8')
 
     def get_outer_url(self, cid: str, filename: str):
         if filename.startswith('.'):
