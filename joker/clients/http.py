@@ -11,8 +11,12 @@ from urllib.parse import urljoin
 import requests
 
 from joker.clients.utils import (
-    ResponseDict, dump_json_request_to_curl, _log_bad_response,
-    _decode_response, decode_response, _BaseHTTPClient,
+    ResponseDict,
+    dump_json_request_to_curl,
+    _log_bad_response,
+    _decode_response,
+    decode_response,
+    _BaseHTTPClient,
 )
 
 _logger = logging.getLogger(__name__)
@@ -25,6 +29,7 @@ _compat_names = [
     ResponseDict,
     _BaseHTTPClient,
 ]
+_JSON_TYPE = Union[dict, list, None, int, float, bool]
 
 
 class HTTPClient(_BaseHTTPClient):
@@ -34,36 +39,34 @@ class HTTPClient(_BaseHTTPClient):
         return urljoin(self.base_url, path)
 
     @staticmethod
-    def _load_json(resp: requests.Response) -> Union[dict, list, None]:
+    def _load_json(resp: requests.Response) -> _JSON_TYPE:
         err = _logger.error
         if resp.status_code != 200:
-            err('status_code %s from %s', resp.status_code, resp.url)
+            err("status_code %s from %s", resp.status_code, resp.url)
             return
         try:
             data = json.loads(resp.text)
         except json.JSONDecodeError:
             traceback.print_exc()
-            err('bad json from %s', resp.url)
+            err("bad json from %s", resp.url)
             return
         if not isinstance(data, dict):
-            err('wrong response type (%s) from %s', type(data), resp.url)
-        code = data.get('code')
-        if data.get('code'):
-            err('non-zero code (%s) from %s', code, resp.url)
+            err("wrong response type (%s) from %s", type(data), resp.url)
+        code = data.get("code")
+        if data.get("code"):
+            err("non-zero code (%s) from %s", code, resp.url)
             return
         return data
 
     @staticmethod
-    def log_request_as_curl(
-            method: str, url: str, data=None, level=logging.DEBUG):
+    def log_request_as_curl(method: str, url: str, data=None, level=logging.DEBUG):
         if not _logger.isEnabledFor(level):
             return
         cmd = dump_json_request_to_curl(method, url, data=data)
         _logger.log(level, cmd)
 
     @staticmethod
-    def log_resp_content(
-            resp: requests.Response, level=logging.ERROR):
+    def log_resp_content(resp: requests.Response, level=logging.ERROR):
         if not _logger.isEnabledFor(level):
             return
         try:
@@ -72,14 +75,13 @@ class HTTPClient(_BaseHTTPClient):
             _logger.log(level, resp.content[:255])
             traceback.print_exc()
 
-    def json_request(self, method, path, data=None, **kwargs) \
-            -> Union[dict, list, None]:
+    def json_request(self, method, path, data=None, **kwargs) -> _JSON_TYPE:
         url = self.get_url(path)
         method = method.upper()
-        kwargs.setdefault('timeout', self.timeout)
+        kwargs.setdefault("timeout", self.timeout)
         if data is not None:
-            kwargs['data'] = json.dumps(data, default=str)
-            kwargs['headers'] = {'Content-type': 'application/json'}
+            kwargs["data"] = json.dumps(data, default=str)
+            kwargs["headers"] = {"Content-type": "application/json"}
         resp = requests.request(method, url, **kwargs)
         resp_data = self._load_json(resp)
         if resp_data is None:
@@ -89,11 +91,10 @@ class HTTPClient(_BaseHTTPClient):
         self.log_request_as_curl(method, url, data, level=logging.DEBUG)
         return resp_data
 
-    def json_get(self, path, **kwargs) -> Union[dict, list, None]:
-        assert 'data' not in kwargs
-        return self.json_request('GET', path, **kwargs)
+    def json_get(self, path, **kwargs) -> _JSON_TYPE:
+        assert "data" not in kwargs
+        return self.json_request("GET", path, **kwargs)
 
-    def json_post(self, path, data=None, **kwargs) -> Union[dict, list, None]:
-        assert 'data' not in kwargs
-        return self.json_request('POST', path, data=data, **kwargs)
-
+    def json_post(self, path, data=None, **kwargs) -> _JSON_TYPE:
+        assert "data" not in kwargs
+        return self.json_request("POST", path, data=data, **kwargs)

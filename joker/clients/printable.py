@@ -31,7 +31,7 @@ class PrintableTask:
 
     def _fmt_url(self, base: str, path: str) -> str:
         url = urljoin(base, path)
-        return url + f'?ctxid={self.ctxid}'
+        return url + f"?ctxid={self.ctxid}"
 
     @property
     def inner_html_url(self) -> str:
@@ -39,7 +39,7 @@ class PrintableTask:
 
     @property
     def inner_pdf_url(self) -> str:
-        return self._fmt_url(self.client.inner_url, f'{self.tpl_path}.pdf')
+        return self._fmt_url(self.client.inner_url, f"{self.tpl_path}.pdf")
 
     @property
     def outer_html_url(self) -> str:
@@ -47,14 +47,14 @@ class PrintableTask:
 
     @property
     def outer_pdf_url(self) -> str:
-        return self._fmt_url(self.client.outer_url, f'{self.tpl_path}.pdf')
+        return self._fmt_url(self.client.outer_url, f"{self.tpl_path}.pdf")
 
     def to_dict(self) -> PrintableTaskDict:
         return {
-            'tpl_path': self.tpl_path,
-            'ctxid': self.ctxid,
-            'html_url': self.outer_html_url,
-            'pdf_url': self.outer_pdf_url,
+            "tpl_path": self.tpl_path,
+            "ctxid": self.ctxid,
+            "html_url": self.outer_html_url,
+            "pdf_url": self.outer_pdf_url,
         }
 
     def obtain_html(self) -> str:
@@ -84,47 +84,48 @@ class PrintableClient:
         if self.outer_url is None:
             self.outer_url = self.inner_url
         c = self.__class__.__name__
-        _logger.info('new %s instance, %r', c, self.inner_url)
+        _logger.info("new %s instance, %r", c, self.inner_url)
 
     @staticmethod
     def _post_as_json(url, data, allow_redirects=False) -> requests.Response:
         resp = utils.post_as_json(url, data, allow_redirects=allow_redirects)
         status = resp.status_code
         if status >= 400:
-            raise TechnicalError(f'got response status code {status}')
+            raise TechnicalError(f"got response status code {status}")
         return resp
 
     def begin(self, tpl_path: str, data: dict) -> PrintableTask:
-        assert tpl_path.endswith('.html')
+        assert tpl_path.endswith(".html")
         url = urljoin(self.inner_url, tpl_path)
-        url += '.pdf'
-        _logger.info('begin context with url: %r', url)
+        url += ".pdf"
+        _logger.info("begin context with url: %r", url)
         resp = self._post_as_json(url, data, allow_redirects=False)
         try:
-            ctxid = utils.parse_url_qsd(resp.headers['Location'])['ctxid']
+            ctxid = utils.parse_url_qsd(resp.headers["Location"])["ctxid"]
         except KeyError:
-            raise RuntimeError(f'failed to render {url!r}')
+            raise RuntimeError(f"failed to render {url!r}")
         return PrintableTask(self, tpl_path, ctxid)
 
     def _generate(self, tpl_path: str, data: dict) -> tuple[bytes, str]:
         url = urljoin(self.inner_url, tpl_path)
-        _logger.info('initial url: %r', url)
+        _logger.info("initial url: %r", url)
         resp = self._post_as_json(url, data)
-        _logger.info('redirected url: %r', resp.url)
+        _logger.info("redirected url: %r", resp.url)
         _logger.info(
-            'content: %s bytes, %r',
-            len(resp.content), resp.content[:100],
+            "content: %s bytes, %r",
+            len(resp.content),
+            resp.content[:100],
         )
         if not utils.check_pdf_validity(resp.content):
-            raise RuntimeError('corrupted PDF file')
+            raise RuntimeError("corrupted PDF file")
         return resp.content, resp.url
 
     def render_pdf(self, tpl_path: str, data: dict) -> bytes:
-        assert tpl_path.endswith('.pdf')
+        assert tpl_path.endswith(".pdf")
         return self._generate(tpl_path, data)[0]
 
     def render_html(self, tpl_path: str, data: dict) -> str:
-        assert tpl_path.endswith('.html')
+        assert tpl_path.endswith(".html")
         url = urljoin(self.inner_url, tpl_path)
         return self._post_as_json(url, data).text
 

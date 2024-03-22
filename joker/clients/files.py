@@ -14,6 +14,6 @@ PathLike = Pathlike
 FileStorageInterface = ContentAddressedStorageClient
 
 __all__ = [
-    'MemberFile',
-    'FileStorageInterface',
+    "MemberFile",
+    "FileStorageInterface",
 ]
