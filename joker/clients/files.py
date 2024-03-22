@@ -2,17 +2,15 @@
 # coding: utf-8
 from __future__ import annotations
 
-import os
-import typing
-
 from joker.clients.cas import MemberFile, ContentAddressedStorageClient
+from joker.clients.utils import Pathlike
 
 """
 Deprecated!
 This module will be removed on ver 0.3.0.
 """
 
-PathLike = typing.Union[str, os.PathLike]
+PathLike = Pathlike
 FileStorageInterface = ContentAddressedStorageClient
 
 __all__ = [

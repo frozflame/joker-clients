@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shlex
+import typing
 import urllib.parse
 from dataclasses import dataclass
 from functools import cached_property
@@ -16,6 +18,7 @@ from volkanic.introspect import razor
 from volkanic.utils import json_default
 
 _logger = logging.getLogger(__name__)
+Pathlike = typing.Union[str, os.PathLike]
 
 
 class ResponseDict(dict):

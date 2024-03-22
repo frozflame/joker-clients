@@ -2,7 +2,6 @@
 # coding: utf-8
 from __future__ import annotations
 
-import os
 import typing
 import zipfile
 import zlib
@@ -12,7 +11,7 @@ from urllib.parse import urljoin
 
 import requests
 
-PathLike = typing.Union[str, os.PathLike]
+from joker.clients.utils import Pathlike
 
 
 class MemberFile(typing.TypedDict):
@@ -63,7 +62,7 @@ class ContentAddressedStorageClient:
         content = self.load(cid)
         return zlib.decompress(content, wbits=31).decode('utf-8')
 
-    def create_archive(self, path: PathLike, memberfiles: list[MemberFile]):
+    def create_archive(self, path: Pathlike, memberfiles: list[MemberFile]):
         with zipfile.ZipFile(path, "w") as zipf:
             for m in memberfiles:
                 content = self.load(m['cid'])
