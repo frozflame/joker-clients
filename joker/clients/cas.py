@@ -62,6 +62,13 @@ class ContentAddressedStorageClient:
         content = self.load(cid)
         return zlib.decompress(content, wbits=31).decode('utf-8')
 
+    def get_outer_url(self, cid: str, filename: str):
+        if filename.startswith('.'):
+            url = f'/files/{cid}{filename}'
+        else:
+            url = f'/files/{cid}?filename={filename}'
+        return urljoin(self.outer_url, url)
+
     def create_archive(self, path: Pathlike, memberfiles: list[MemberFile]):
         with zipfile.ZipFile(path, "w") as zipf:
             for m in memberfiles:
