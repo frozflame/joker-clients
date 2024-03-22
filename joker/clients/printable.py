@@ -9,9 +9,9 @@ from typing import TypedDict
 from urllib.parse import urljoin
 
 import requests
+from volkanic.errors import TechnicalError
 
 from joker.clients import utils
-from joker.clients.utils import post_as_json
 
 _logger = logging.getLogger(__name__)
 
@@ -86,22 +86,30 @@ class PrintableClient:
         c = self.__class__.__name__
         _logger.info('new %s instance, %r', c, self.inner_url)
 
+    @staticmethod
+    def _post_as_json(url, data, allow_redirects=False) -> requests.Response:
+        resp = utils.post_as_json(url, data, allow_redirects=allow_redirects)
+        status = resp.status_code
+        if status >= 400:
+            raise TechnicalError(f'got response status code {status}')
+        return resp
+
     def begin(self, tpl_path: str, data: dict) -> PrintableTask:
         assert tpl_path.endswith('.html')
         url = urljoin(self.inner_url, tpl_path)
         url += '.pdf'
         _logger.info('begin context with url: %r', url)
-        resp = post_as_json(url, data, allow_redirects=False)
+        resp = self._post_as_json(url, data, allow_redirects=False)
         try:
             ctxid = utils.parse_url_qsd(resp.headers['Location'])['ctxid']
         except KeyError:
             raise RuntimeError(f'failed to render {url!r}')
         return PrintableTask(self, tpl_path, ctxid)
 
-    def _generate(self, tpl_path: str, data: dict) -> (bytes, str):
+    def _generate(self, tpl_path: str, data: dict) -> tuple[bytes, str]:
         url = urljoin(self.inner_url, tpl_path)
         _logger.info('initial url: %r', url)
-        resp = post_as_json(url, data)
+        resp = self._post_as_json(url, data)
         _logger.info('redirected url: %r', resp.url)
         _logger.info(
             'content: %s bytes, %r',
@@ -118,7 +126,7 @@ class PrintableClient:
     def render_html(self, tpl_path: str, data: dict) -> str:
         assert tpl_path.endswith('.html')
         url = urljoin(self.inner_url, tpl_path)
-        return post_as_json(url, data).text
+        return self._post_as_json(url, data).text
 
     @property
     def base_url(self):
