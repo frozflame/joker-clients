@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import requests
 from volkanic.errors import TechnicalError
 
+from joker.clients import utils
 from joker.clients.utils import Pathlike
 
 
@@ -22,32 +23,23 @@ class MemberFile(typing.TypedDict):
 
 @dataclass
 class ContentAddressedStorageClient:
-    base_url: str
-    credential: dict
+    inner_url: str
     outer_url: str = None
 
-    @property
-    def inner_url(self):
-        return self.base_url
-
     def __post_init__(self):
+        utils.ensure_url_root(self.inner_url)
         if self.outer_url is None:
-            self.outer_url = self.base_url
-
-    @property
-    def _adhoc_session(self):
-        sess = requests.session()
-        url = urljoin(self.base_url, "login")
-        sess.post(url, data=self.credential)
-        return sess
+            self.outer_url = self.inner_url
+        else:
+            utils.ensure_url_root(self.outer_url)
 
     @cached_property
     def session(self):
-        return self._adhoc_session
+        return requests.session()
 
     def save(self, content: bytes) -> str:
-        url = urljoin(self.base_url, "files")
-        resp = self._adhoc_session.post(url, files={"file": content})
+        url = urljoin(self.inner_url, "files")
+        resp = self.session.post(url, files={"file": content})
         return resp.json()["data"]
 
     def load(self, cid: str) -> None | bytes:

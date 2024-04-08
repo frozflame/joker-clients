@@ -24,7 +24,7 @@ Pathlike = typing.Union[str, os.PathLike]
 class ResponseDict(dict):
     @property
     def code(self) -> int:
-        return self.get("code", 3)
+        return self.get("code", 0)
 
     @property
     def data(self):
@@ -32,7 +32,7 @@ class ResponseDict(dict):
 
     @property
     def message(self):
-        return self.get("message", "OK")
+        return self.get("message")
 
 
 def dump_json_request_to_curl(method: str, url: str, data=None, aslist=False):
