@@ -109,7 +109,7 @@ class PrintableClient:
     def _generate(self, tpl_path: str, data: dict) -> tuple[bytes, str]:
         url = urljoin(self.inner_url, tpl_path)
         _logger.info("initial url: %r", url)
-        resp = self._post_as_json(url, data)
+        resp = self._post_as_json(url, data, allow_redirects=True)
         _logger.info("redirected url: %r", resp.url)
         _logger.info(
             "content: %s bytes, %r",
