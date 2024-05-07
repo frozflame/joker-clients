@@ -1,4 +1,4 @@
-__version__ = '0.2.4'
+__version__ = "0.3.0dev"
 
 from joker.clients.cas import ContentAddressedStorageClient
 from joker.clients.files import FileStorageInterface
@@ -7,5 +7,5 @@ from joker.clients.printable import PrintableClient
 
 CASClient = ContentAddressedStorageClient
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(__version__)
