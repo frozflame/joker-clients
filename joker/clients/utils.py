@@ -11,6 +11,7 @@ import urllib.parse
 from dataclasses import dataclass
 from functools import cached_property
 from json import JSONDecodeError
+from typing import Callable
 
 import requests
 from volkanic.errors import TechnicalError
@@ -101,7 +102,7 @@ def ensure_url_root(url: str) -> None:
     raise ValueError('service url path must end with "/"')
 
 
-def post_as_json(url: str, data: dict, func=requests.post, **kwargs):
+def post_as_json(url: str, data: dict, func: Callable = requests.post, **kwargs):
     """
     Exists because by calling requests.post(url, json=data)
     you have nowhere to pass a parameter like default=str
@@ -123,7 +124,7 @@ class _HTTPClient:
 
     @cached_property
     def session(self):
-        return requests.session()
+        return requests.Session()
 
     def _post_as_json(self, url: str, data: dict, **kwargs):
         """

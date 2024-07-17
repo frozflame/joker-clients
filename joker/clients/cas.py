@@ -35,7 +35,8 @@ class ContentAddressedStorageClient:
 
     @cached_property
     def session(self):
-        return requests.session()
+        # note: requests.session() is deprecated; use cap S
+        return requests.Session()
 
     def save(self, content: bytes) -> str:
         url = urljoin(self.inner_url, "files")
@@ -64,8 +65,10 @@ class ContentAddressedStorageClient:
     def get_outer_url(self, cid: str, filename: str):
         if filename.startswith("."):
             url = f"/files/{cid}{filename}"
+            # url = f"/cas/c/{cid}{filename}"
         else:
             url = f"/files/{cid}?filename={filename}"
+            # url = f"/cas/c/{cid}?filename={filename}"
         return urljoin(self.outer_url, url)
 
     def create_archive(self, path: Pathlike, memberfiles: list[MemberFile]):

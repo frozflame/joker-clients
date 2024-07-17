@@ -77,7 +77,7 @@ class PrintableClient:
 
     @cached_property
     def session(self):
-        return requests.session()
+        return requests.Session()
 
     def __post_init__(self):
         utils.ensure_url_root(self.inner_url)
