@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
+from __future__ import annotations
 
 import logging
 import mimetypes
@@ -13,8 +14,7 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import cached_property
-from typing import TypedDict
-from typing import Union, List
+from typing import TypedDict, Union, List
 
 _logger = logging.getLogger(__name__)
 
@@ -143,6 +143,7 @@ class EmailAgentConfDict(TypedDict):
     host: str
     port: int
     accounts: list[EmailAccount]
+    interceptors: Union[list[str], None]
 
 
 @dataclass
@@ -150,6 +151,7 @@ class EmailAgent:
     host: str
     port: int
     accounts: list[EmailAccount]
+    interceptors: Union[list[str], None] = None
 
     @cached_property
     def _local_hostname(self) -> str:
@@ -171,6 +173,26 @@ class EmailAgent:
         smtp.login(**account)
         return smtp
 
+    def _prep_msg(
+        self,
+        from_addr: str,
+        to_addrs: list,
+        subject: str,
+    ) -> MIMEMultipart:
+        """Forge 'To' and 'Subject' if self.interceptors is configured."""
+        msg = MIMEMultipart()
+        msg["From"] = from_addr
+        if self.interceptors:
+            to = ", ".join(self.interceptors)
+            msg["To"] = to
+            msg["Subject"] = f"Intercepted: {subject}"
+            text = f"This is an intercepted mail sending to {to}."
+            msg.attach(MIMEText(text, "plain"))
+        else:
+            msg["To"] = ", ".join(to_addrs)
+            msg["Subject"] = subject
+        return msg
+
     def send(
         self,
         from_addr: str,
@@ -185,10 +207,7 @@ class EmailAgent:
             with the message represented by an email.message.Message object.
             https://docs.python.org/3/library/smtplib.html#smtplib.SMTP.send_message
         """
-        msg = MIMEMultipart()
-        msg["From"] = from_addr
-        msg["To"] = ", ".join(to_addrs)
-        msg["Subject"] = subject
+        msg= self._prep_msg(from_addr, to_addrs, subject)
         if isinstance(body, str):
             body = MIMEText(body, "plain")
         msg.attach(body)

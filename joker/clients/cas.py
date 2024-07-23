@@ -64,10 +64,10 @@ class ContentAddressedStorageClient:
 
     def get_outer_url(self, cid: str, filename: str):
         if filename.startswith("."):
-            url = f"/files/{cid}{filename}"
+            url = f"files/{cid}{filename}"
             # url = f"/cas/c/{cid}{filename}"
         else:
-            url = f"/files/{cid}?filename={filename}"
+            url = f"files/{cid}?filename={filename}"
             # url = f"/cas/c/{cid}?filename={filename}"
         return urljoin(self.outer_url, url)
 

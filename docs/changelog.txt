@@ -1,3 +1,10 @@
+Changes of joker-clients
+------------------------
+
+ver 0.4.1
+* add EmailAgent.interceptors
+* ContentAddressedStorageClient.get_outer_url(): relative path
+
 ver 0.4.0
 * remove FileStorageInterface, files.py
 * requires python>=3.7
