@@ -8,7 +8,7 @@ from setuptools import setup, find_namespace_packages
 
 # import joker; exit(1)
 # DO NOT import your package from your setup.py
-description = "simple clients for simple and dedicated services"
+description = "simple and reusable client-side toolkits"
 
 
 def read(filename):
@@ -55,6 +55,7 @@ config = {
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
     # ensure copy static file to runtime directory
     "include_package_data": True,

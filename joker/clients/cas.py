@@ -22,7 +22,7 @@ class MemberFile(typing.TypedDict):
 
 
 @dataclass
-class ContentAddressedStorageClient:
+class _CASClientBase:
     inner_url: str
     outer_url: str = None
 
@@ -37,6 +37,11 @@ class ContentAddressedStorageClient:
     def session(self):
         # note: requests.session() is deprecated; use cap S
         return requests.Session()
+
+
+class ContentAddressedStorageClient(_CASClientBase):
+    inner_url: str
+    outer_url: str = None
 
     def save(self, content: bytes) -> str:
         url = urljoin(self.inner_url, "files")
@@ -65,10 +70,8 @@ class ContentAddressedStorageClient:
     def get_outer_url(self, cid: str, filename: str):
         if filename.startswith("."):
             url = f"files/{cid}{filename}"
-            # url = f"/cas/c/{cid}{filename}"
         else:
             url = f"files/{cid}?filename={filename}"
-            # url = f"/cas/c/{cid}?filename={filename}"
         return urljoin(self.outer_url, url)
 
     def create_archive(self, path: Pathlike, memberfiles: list[MemberFile]):
@@ -77,3 +80,30 @@ class ContentAddressedStorageClient:
                 content = self.load(m["cid"])
                 with zipf.open(m["filename"], "w") as fout:
                     fout.write(content)
+
+
+class CascadisClient(_CASClientBase):
+    inner_url: str
+    outer_url: str = None
+
+    def save(self, content: bytes) -> str:
+        url = urljoin(self.inner_url, "cascadis/files")
+        resp = self.session.post(url, files={"file": content})
+        return resp.json()["data"]
+
+    def load(self, cid: str) -> None | bytes:
+        url = urljoin(self.inner_url, f"cascadis/content/{cid}")
+        resp = requests.get(url)
+        if resp.status_code == 200:
+            return resp.content
+        if resp.status_code == 404:
+            return
+        raise TechnicalError(f"got response status code {resp.status_code}")
+
+    def fmt_outer_url(self, cid: str, filename: str, short=False):
+        prefix = "cas/c" if short else "cascadis/content"
+        if filename.startswith("."):
+            url = f"{prefix}/{cid}{filename}"
+        else:
+            url = f"{prefix}/{cid}?filename={filename}"
+        return urljoin(self.outer_url, url)

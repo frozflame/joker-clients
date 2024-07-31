@@ -7,6 +7,7 @@ import mimetypes
 import os.path
 import smtplib
 import socket
+import warnings
 from dataclasses import dataclass
 from email import encoders
 from email.message import EmailMessage
@@ -73,6 +74,10 @@ class EmailInterface:
             from_addr:
             fake: if true, messages will NOT be send actually
         """
+        warnings.warn(
+            "EmailInterface is deprecated and will be removed at ver 0.5.0",
+            DeprecationWarning,
+        )
         self.host = host
         self.port = port
         self.username = username
@@ -207,7 +212,7 @@ class EmailAgent:
             with the message represented by an email.message.Message object.
             https://docs.python.org/3/library/smtplib.html#smtplib.SMTP.send_message
         """
-        msg= self._prep_msg(from_addr, to_addrs, subject)
+        msg = self._prep_msg(from_addr, to_addrs, subject)
         if isinstance(body, str):
             body = MIMEText(body, "plain")
         msg.attach(body)

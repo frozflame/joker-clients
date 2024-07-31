@@ -1,7 +1,7 @@
 joker-clients
 =============
 
-simple clients for simple and dedicated services
+simple and reusable client-side toolkits
 
 Develop
 -------

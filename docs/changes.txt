@@ -1,6 +1,11 @@
 Changes of joker-clients
 ------------------------
 
+ver 0.4.2
+* add CascadisClient
+* alias MonologClient = MonologInterface
+
+
 ver 0.4.1
 * add EmailAgent.interceptors
 * ContentAddressedStorageClient.get_outer_url(): relative path
