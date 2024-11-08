@@ -2,6 +2,7 @@
 # coding: utf-8
 from __future__ import annotations
 
+import os
 import typing
 import zipfile
 import zlib
@@ -38,7 +39,25 @@ class _CASClientBase:
         # note: requests.session() is deprecated; use cap S
         return requests.Session()
 
+    def save(self, content: bytes) -> str:
+        raise NotImplementedError
 
+    def load(self, cid: str) -> None | bytes:
+        raise NotImplementedError
+
+    def upload(self, path: Pathlike):
+        content = open(path, "rb").read()
+        return self.save(content)
+
+    def download(self, cid: str, path: Pathlike):
+        rand_hex = os.urandom(8).hex()
+        tmp_path = f"{path}.{rand_hex}.tmp"
+        with open(tmp_path, "wb") as fout:
+            fout.write(self.load(cid))
+        os.rename(tmp_path, path)
+
+
+@dataclass
 class ContentAddressedStorageClient(_CASClientBase):
     inner_url: str
     outer_url: str = None
@@ -82,6 +101,7 @@ class ContentAddressedStorageClient(_CASClientBase):
                     fout.write(content)
 
 
+@dataclass
 class CascadisClient(_CASClientBase):
     inner_url: str
     outer_url: str = None

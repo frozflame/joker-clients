@@ -1,10 +1,13 @@
 Changes of joker-clients
 ------------------------
 
+ver 0.4.3
+* add NamtsoResolverClient, NamtsoInquirerClient
+* add _CASClientBase.upload(), _CASClientBase.download()
+
 ver 0.4.2
 * add CascadisClient
 * alias MonologClient = MonologInterface
-
 
 ver 0.4.1
 * add EmailAgent.interceptors
